@@ -67,6 +67,16 @@ class OtherApiDemo {
     }
 
     /**
+     * 串口日志打印开关
+     */
+    fun showLogDemo() {
+        //是否打印串口通信日志 true为打印日志,false为不打印；
+        //建议在Release版本中不打印串口日志；
+        //打印的日志的 tag = "EasyPort"；
+        EasySerialBuilder.isShowLog(true)
+    }
+
+    /**
      * 获取本设备所有的串口名称，示例
      */
     fun getAllPortNameDemo() {

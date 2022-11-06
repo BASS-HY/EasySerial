@@ -1,25 +1,47 @@
-# EasySerial串口通信SDK
 
-------------------------------------------------------------------
-
-#### 此项目移植于谷歌官方串口库[android-serialport-api](https://code.google.com/archive/p/android-serialport-api/) ，以及[GeekBugs-Android-SerialPort](https://github.com/GeekBugs/Android-SerialPort) ，综合了这俩个库的C代码，对其进行封装，以适应串口读取的不同需求；
-
-## 作者有话要说
-
---------------------------------------------------------------------------
-**1. 此SDK本人已经在多个项目中实践使用，如果你在使用中有任何问题，请在issue中向我提出；**  
-**2. 当前仅支持Kotlin项目使用，对于java调用做的并不完美；**  
-**3. 此SDK可以创建2种不同作用的串口对象，一个是保持串口接收的串口对象，一个是写入并同步等待数据返回的对象；**
+# 一、前言
 
 --------------------------------------------------------------------------
 
-## SDK的使用介绍
+1. **此SDK用于Android端的串口通信，此项目的C++代码移植于谷歌官方串口库[android-serialport-api](https://code.google.com/archive/p/android-serialport-api/) ，以及[GeekBugs-Android-SerialPort](https://github.com/GeekBugs/Android-SerialPort) ；在此基础上，我进行了封装，目的是让开发者可以更加快速的进行串口通信；**
+2. **此SDK可以创建2种不同作用的串口对象，一个是保持串口接收的串口对象，一个是写入并同步等待数据返回的串口对象；**
+3. **当前仅支持Kotlin项目使用，对于java调用做的并不完美；**
+4. **此SDK本人已经在多个项目中实践使用，并在github上进行开源，如果你在使用中有任何问题，请在issue中向我提出；**
 
 --------------------------------------------------------------------------
 
-### **EasyKeepReceivePort的使用：**
+# 二、SDK的使用介绍
 
-**1. 创建一个永久接收的串口(串口开启失败返回Null)；   
+--------------------------------------------------------------------------
+
+##  引入库
+在Build.gradle(:project)下导入jitpack库
+```groovy
+allprojects {
+		repositories {
+			maven { url 'https://jitpack.io' }
+		}
+}
+```
+在新版gradle中，在settings.gradle下导入jitpack库
+```groovy
+dependencyResolutionManagement {
+    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+    repositories {
+        maven { url "https://jitpack.io" }
+    }
+}
+```
+在Build.gradle(:module)中添加：
+```groovy
+dependencies {
+    implementation 'com.github.BASS-HY:EasySerial:v1.0'
+}
+```
+
+## EasyKeepReceivePort的使用
+
+**1.创建一个永久接收的串口(串口开启失败返回Null)；   
 演示：不做自定义返回数据的处理；**
 
 A). 创建一个串口,串口返回的数据默认为ByteArray类型；
@@ -189,7 +211,7 @@ CoroutineScope(Dispatchers.IO).launch { port.close() }//关闭串口
 
 --------------------------------------------------------------------------
 
-### **EasyWaitRspPort的使用：**
+## EasyWaitRspPort的使用
 
 A). 创建一个发送后再接收的串口(串口开启失败返回Null)；
 ```kotlin
@@ -231,9 +253,9 @@ val rspBean : WaitResponseBean = port.writeWaitRsp(orderByteArray1, 500)
 ```kotlin
 rspBean.bytes
 ```
-这是串口返回的数据,此字节数组的大小为我们```setBufferSize()```时输入的字节大小；需要注意的是,字节数组内的字节并不全是串口返回的数据；   
+这是串口返回的数据,此字节数组的大小为我们```setBufferSize()```时输入的字节大小；需要注意的是,字节数组内的字节并不全是串口返回的数据；
 
-默认的字节数组大小为64，我们假设串口返回了4个字节的数据，那么其余的60个字节都是0；   
+默认的字节数组大小为64，我们假设串口返回了4个字节的数据，那么其余的60个字节都是0；
 
 那我们怎么知道实际收到了多少个字节呢？这就需要用到数据类内的另一个数据：
 ```kotlin
@@ -248,17 +270,17 @@ val portBytes = rspBean.bytes.copyOf(rspBean.size)
  val hexString = rspBean.bytes.conver2HexString(rspBean.size)
 ```
 
-**2. 有时候，我们可能需要连续向串口输出命令，并等待其返回,对此我们也提供了便捷的方案：**   
+**2. 有时候，我们可能需要连续向串口输出命令，并等待其返回,对此我们也提供了便捷的方案：**
 ```kotlin
 val rspBeanList : MutableList<WaitResponseBean> = port.writeAllWaitRsp(200, orderByteArray1, orderByteArray2, orderByteArray3)
 ```
-同样的，此方法也是需要在协程作用域中调用；   
+同样的，此方法也是需要在协程作用域中调用；
 
-我们来讲解一下函数参数：   
+我们来讲解一下函数参数：
 
-第1个参数：单个写入命令的阻塞等待时长，注意，这是单个的，并非所有命令的总阻塞时长；   
+第1个参数：单个写入命令的阻塞等待时长，注意，这是单个的，并非所有命令的总阻塞时长；
 
-第2个参数：一个数组类型，即我们想写入并等待返回的所有指令集；   
+第2个参数：一个数组类型，即我们想写入并等待返回的所有指令集；
 
 ```rspBeanList```为多个```WaitResponseBean```的集合，我们在上面已经讲解了```WaitResponseBean```，此处不再赘述；集合中的数据与请求是一一对应：
 ```kotlin
@@ -282,7 +304,7 @@ CoroutineScope(Dispatchers.IO).launch { port.close() }
 
 --------------------------------------------------------------------------
 
-### **其他API的使用介绍**
+## 其他API的使用介绍
 
 **1. 获取串口对象：**   
 每一个串口只会创建一个实例，我们在内部缓存了串口实例，即一处创建,到处可取；如果此串口还未创建，则将获取到Null；
@@ -333,7 +355,15 @@ allDevicesPath.forEach { Log.d(tag, "串口名称: $it") }
 val hasPortWorking: Boolean = EasySerialBuilder.hasPortWorking()
 ```
 
-**5. 数据转化：**   
+**5. 串口日志打印开关：**   
+是否打印串口通信日志 true为打印日志,false为不打印；   
+建议在Release版本中不打印串口日志；   
+打印的日志的 tag = "EasyPort"；
+```kotlin
+EasySerialBuilder.isShowLog(true)
+```
+
+**6. 数据转化：**   
 A). 16进制字符串转为字节数组：
 ```kotlin
 val hexString = "00 FF CA FA"
@@ -383,3 +413,13 @@ val charArray3 = byteArray2.conver2CharArray(2, 3)//即:"HA"
 //将字节数组第2位 转为 字符数组
 val charArray4 = byteArray2.conver2CharArray(2, 2)//即:"H"
 ```
+
+#  三、传送门
+1. [github地址](https://github.com/BASS-HY/EasySerial)   
+2. [CSDN地址](https://blog.csdn.net/weixin_45379305/article/details/127719263)   
+3. 如果有什么意见和建议都可以在github或者在CSDN中向我提出噢，我也会一直完善此项目的；
+
+# 四、鸣谢
+此项目移植于谷歌官方串口库[android-serialport-api](https://code.google.com/archive/p/android-serialport-api/) ，以及[GeekBugs-Android-SerialPort](https://github.com/GeekBugs/Android-SerialPort) ，综合了这俩个库的C代码，对其进行的封装；
+
+# 五、
