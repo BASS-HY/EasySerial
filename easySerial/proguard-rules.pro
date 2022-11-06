@@ -1,0 +1,3 @@
+-keep class com.bass.easySerial.bean.**{*;}
+-keep class com.bass.easySerial.enums.**{*;}
+-keep class com.bass.easySerial.SerialPort{*;}
