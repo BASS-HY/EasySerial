@@ -18,9 +18,9 @@
 在Build.gradle(:project)下导入jitpack库
 ```groovy
 allprojects {
-		repositories {
-			maven { url 'https://jitpack.io' }
-		}
+    repositories {
+        maven { url 'https://jitpack.io' }
+    }
 }
 ```
 在新版gradle中，在settings.gradle下导入jitpack库
