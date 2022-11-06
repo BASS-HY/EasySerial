@@ -7,6 +7,7 @@
 2. **此SDK可以创建2种不同作用的串口对象，一个是保持串口接收的串口对象，一个是写入并同步等待数据返回的串口对象；**
 3. **当前仅支持Kotlin项目使用，对于java调用做的并不完美；**
 4. **此SDK本人已经在多个项目中实践使用，并在github上进行开源，如果你在使用中有任何问题，请在issue中向我提出；**
+5. **本SDK不向您保证任何稳定性及可靠性，您将自行承担使用本SDK后可能带来的任何后果；**
 
 --------------------------------------------------------------------------
 
@@ -422,4 +423,19 @@ val charArray4 = byteArray2.conver2CharArray(2, 2)//即:"H"
 # 四、鸣谢
 此项目移植于谷歌官方串口库[android-serialport-api](https://code.google.com/archive/p/android-serialport-api/) ，以及[GeekBugs-Android-SerialPort](https://github.com/GeekBugs/Android-SerialPort) ，综合了这俩个库的C代码，对其进行的封装；
 
-# 五、
+# 五、许可证
+``` 
+Copyright 2022 BASS
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+```
