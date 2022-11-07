@@ -15,5 +15,5 @@ dependencyResolutionManagement {
     }
 }
 rootProject.name = "EasySerialPort"
-include ':app'
+//include ':app'
 include ':easySerial'
