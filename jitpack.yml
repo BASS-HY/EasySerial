@@ -6,5 +6,5 @@ before_install:
   - sdk use java 11.0.10-open
 
 install:
-  - .\gradlew :easySerial:build :easySerial:publishToMavenLocal
+  - ./gradlew :easySerial:build :easySerial:publishToMavenLocal
 #  - find. -name "*.aar"
