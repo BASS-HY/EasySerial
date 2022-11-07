@@ -2,6 +2,7 @@ plugins {
     id 'com.android.library'
     id 'kotlin-android'
     id 'kotlin-kapt'
+    id 'maven-publish'
 }
 
 android {
@@ -42,4 +43,17 @@ android {
 dependencies {
     //协程
     api 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.6.2'
+}
+
+afterEvaluate {
+    publishing {
+        publications {
+            release(MavenPublication) {
+                from components.release
+                groupId = 'com.github.BASS-HY' //groupId 随便取
+                artifactId = 'EasySerial'  //artifactId 随便取
+                version = '1.0.2-alpha'
+            }
+        }
+    }
 }
