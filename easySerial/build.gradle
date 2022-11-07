@@ -45,14 +45,20 @@ dependencies {
     api 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.6.2'
 }
 
+task androidSourcesJar(type: Jar) {
+    classifier 'sources'
+    from android.sourceSets.main.java.srcDirs
+}
+
 afterEvaluate {
     publishing {
         publications {
             release(MavenPublication) {
                 from components.release
-                groupId = 'com.github.BASS-HY' //groupId 随便取
-                artifactId = 'EasySerial'  //artifactId 随便取
-                version = '1.0.3-alpha'
+                groupId = 'com.github.BASS-HY'
+                artifactId = 'EasySerial'
+                version = '1.0.5-alpha'
+                artifact androidSourcesJar
             }
         }
     }
