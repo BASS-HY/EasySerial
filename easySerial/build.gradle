@@ -52,7 +52,7 @@ afterEvaluate {
                 from components.release
                 groupId = 'com.github.BASS-HY' //groupId 随便取
                 artifactId = 'EasySerial'  //artifactId 随便取
-                version = '1.0.2-alpha'
+                version = '1.0.3-alpha'
             }
         }
     }
