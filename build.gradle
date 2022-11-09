@@ -8,3 +8,9 @@ plugins {
 task clean(type: Delete) {
     delete rootProject.buildDir
 }
+
+ext {
+    jitpackGroupId = "com.github.BASS-HY"
+    jitpackArtifactId = "EasySerial"
+    jitpackVersion = "v1.0.9-alpha"
+}

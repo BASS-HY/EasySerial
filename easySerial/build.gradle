@@ -5,8 +5,8 @@ plugins {
     id 'maven-publish'
 }
 
-group = 'com.github.BASS-HY'
-version = 'v1.0.7-alpha'
+group = rootProject.ext.jitpackGroupId
+version = rootProject.ext.jitpackVersion
 
 android {
     compileSdk 32
@@ -54,9 +54,9 @@ afterEvaluate {
             // Creates a Maven publication called "release".
             release(MavenPublication) {
                 from components.release
-                groupId = 'com.github.BASS-HY'
-                artifactId = 'EasySerial'
-                version = 'v1.0.9-alpha'
+                groupId = rootProject.ext.jitpackGroupId
+                artifactId = rootProject.ext.jitpackArtifactId
+                version = rootProject.ext.jitpackVersion
             }
         }
     }
