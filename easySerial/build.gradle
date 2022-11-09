@@ -4,7 +4,6 @@ plugins {
     id 'kotlin-kapt'
     id 'maven-publish'
 }
-//apply plugin: 'maven-publish'
 
 group = rootProject.ext.jitpackGroupId
 version = rootProject.ext.jitpackVersion
@@ -62,23 +61,3 @@ afterEvaluate {
         }
     }
 }
-
-
-//task androidSourcesJar(type: Jar) {
-//    classifier 'sources'
-//    from android.sourceSets.main.java.srcDirs
-//}
-//
-//afterEvaluate {
-//    publishing {
-//        publications {
-//            release(MavenPublication) {
-//                from components.release
-//                groupId = 'com.github.BASS-HY'
-//                artifactId = 'EasySerial'
-//                version = '1.0.5-alpha'
-//                artifact androidSourcesJar
-//            }
-//        }
-//    }
-//}

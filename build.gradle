@@ -20,5 +20,5 @@ task clean(type: Delete) {
 ext {
     jitpackGroupId = "com.github.BASS-HY"
     jitpackArtifactId = "EasySerial"
-    jitpackVersion = "v1.1.5-alpha"
+    jitpackVersion = "v1.1.6-alpha"
 }
