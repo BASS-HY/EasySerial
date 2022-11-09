@@ -1,10 +1,4 @@
 jdk:
   - openjdk11
 before_install:
-  - yes | sdkmanager "cmake;3.22.1"
-#  - sdk install java 11.0.10-open
-#  - sdk use java 11.0.10-open
-
-#install:
-#  - ./gradlew :easySerial:build :easySerial:publishToMavenLocal
-#  - find. -name "*.aar"
+  - yes | sdkmanager "cmake;3.10.2"
