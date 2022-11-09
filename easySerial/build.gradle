@@ -56,7 +56,7 @@ afterEvaluate {
                 from components.release
                 groupId = 'com.github.BASS-HY'
                 artifactId = 'EasySerial'
-                version = 'v1.0.7-alpha'
+                version = 'v1.0.9-alpha'
             }
         }
     }
