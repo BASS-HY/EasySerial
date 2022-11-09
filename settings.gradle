@@ -15,5 +15,5 @@ dependencyResolutionManagement {
     }
 }
 rootProject.name = "EasySerialPort"
-//include ':app'
+//if (!System.env.JITPACK) include ':app'
 include ':easySerial'
