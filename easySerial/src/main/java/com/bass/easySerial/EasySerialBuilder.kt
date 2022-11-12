@@ -80,7 +80,6 @@ object EasySerialBuilder {
             }
             if (path.isEmpty() || baudRate.baudRate == -1) throw InvalidParameterException()
 
-            val serialPortChat = EasyWaitRspPort()
             val serialPort = SerialPort(
                 File(path),
                 baudRate.baudRate,
@@ -90,7 +89,7 @@ object EasySerialBuilder {
                 parity.parity,
                 flowCon.flowCon
             )
-            serialPortChat.initSerialPort(serialPort)
+            val serialPortChat = EasyWaitRspPort(serialPort)
             serialPortMap[path] = serialPortChat
             return serialPortChat
         } catch (e: SecurityException) {
@@ -144,7 +143,6 @@ object EasySerialBuilder {
             }
             if (path.isEmpty() || baudRate.baudRate == -1) throw InvalidParameterException()
 
-            val serialPortChat = EasyKeepReceivePort<CallBackType>()
             val serialPort = SerialPort(
                 File(path),
                 baudRate.baudRate,
@@ -154,7 +152,7 @@ object EasySerialBuilder {
                 parity.parity,
                 flowCon.flowCon
             )
-            serialPortChat.initSerialPort(serialPort)
+            val serialPortChat = EasyKeepReceivePort<CallBackType>(serialPort)
             serialPortMap[path] = serialPortChat
             return serialPortChat
         } catch (e: SecurityException) {

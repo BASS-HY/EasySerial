@@ -16,6 +16,7 @@
 
 package com.bass.easySerial.wrapper
 
+import com.bass.easySerial.SerialPort
 import com.bass.easySerial.handle.EasyPortDataHandle
 import com.bass.easySerial.interfaces.EasyReadDataCallBack
 import com.bass.easySerial.interfaces.EasyReceiveCallBack
@@ -39,8 +40,8 @@ import java.util.concurrent.CopyOnWriteArrayList
  * @param CallBackType 返回的数据类型
  */
 @Suppress("UNUSED")
-class EasyKeepReceivePort<CallBackType> internal constructor() :
-    BaseEasySerialPort(), EasyReadDataCallBack {
+class EasyKeepReceivePort<CallBackType> internal constructor(serialPort: SerialPort) :
+    BaseEasySerialPort(serialPort), EasyReadDataCallBack {
 
     private val callBackList by lazy { CopyOnWriteArrayList<EasyReceiveCallBack<CallBackType>>() }//监听数据返回
     private var dataHandle: EasyPortDataHandle<CallBackType>? = null//数据处理类
@@ -109,21 +110,22 @@ class EasyKeepReceivePort<CallBackType> internal constructor() :
     }
 
     /**
-     * 设置串口单次接收数据的最大字节数
-     * @param bufferSize 指定串口单次接收数据的最大字节数
+     * 设置串口每次从数据流中读取的最大字节数；
+     * 必须在调用[addDataCallBack]之前设置，否则设置无效；
+     * @param max 指定串口每次从数据流中读取的最大字节数；
      */
-    fun setBufferSize(bufferSize: Int): EasyKeepReceivePort<CallBackType> {
-        customBufferSize = bufferSize
+    fun setMaxReadSize(max: Int): EasyKeepReceivePort<CallBackType> {
+        customMaxReadSize = max
         return this
     }
 
     /**
      * 设置串口数据读取的间隔 单位为毫秒；
-     * 此方法只在未调用[addDataCallBack]之前设置有效，后续设置不生效；
+     * 默认为10毫秒，读取时间越短，CPU的占用会越高，请合理配置此设置；
      * @param interval 间隔时间(毫秒)
      */
     fun setReadInterval(interval: Long): EasyKeepReceivePort<CallBackType> {
-        readInterval = interval
+        serialPort.setReadInterval(interval)
         return this
     }
 
@@ -132,7 +134,7 @@ class EasyKeepReceivePort<CallBackType> internal constructor() :
      * @param byteArray 写入的数据
      */
     fun write(byteArray: ByteArray) {
-        serialPort?.write(byteArray)
+        serialPort.write(byteArray)
     }
 
     //开始接收数据
@@ -141,11 +143,9 @@ class EasyKeepReceivePort<CallBackType> internal constructor() :
         CoroutineScope(Dispatchers.IO).launch {
             mutex.withLock {
                 if (isStart) return@launch//已经开启了则不再开启
-                serialPort?.let {
-                    it.setReadDataCallBack(this@EasyKeepReceivePort)
-                    it.startRead(customBufferSize, readInterval)
-                    isStart = true
-                }
+                serialPort.setReadDataCallBack(this@EasyKeepReceivePort)
+                serialPort.startRead(customMaxReadSize)
+                isStart = true
             }
         }
     }

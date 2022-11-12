@@ -3,7 +3,7 @@
 
 --------------------------------------------------------------------------
 
-1. **此SDK用于Android端的串口通信，此项目的C++代码移植于谷歌官方串口库[android-serialport-api](https://code.google.com/archive/p/android-serialport-api/) ，以及[GeekBugs-Android-SerialPort](https://github.com/GeekBugs/Android-SerialPort) ；在此基础上，我进行了封装，目的是让开发者可以更加快速的进行串口通信；**
+1. **此SDK用于Android端的串口通信，此项目的C代码移植于谷歌官方串口库[android-serialport-api](https://code.google.com/archive/p/android-serialport-api/) ，以及[GeekBugs-Android-SerialPort](https://github.com/GeekBugs/Android-SerialPort) ；在此基础上，我进行了封装，目的是让开发者可以更加快速的进行串口通信；**
 2. **此SDK可以创建2种不同作用的串口对象，一个是保持串口接收的串口对象，一个是写入并同步等待数据返回的串口对象；**
 3. **当前仅支持Kotlin项目使用，对于java调用做的并不完美；**
 4. **此SDK本人已经在多个项目中实践使用，并在github上进行开源，如果你在使用中有任何问题，请在issue中向我提出；**
@@ -36,7 +36,7 @@ dependencyResolutionManagement {
 在Build.gradle(:module)中添加：
 ```groovy
 dependencies {
-    implementation 'com.github.BASS-HY:EasySerial:v1.0'
+    implementation 'com.github.BASS-HY:EasySerial:1.0.0-beta01'
 }
 ```
 
@@ -61,14 +61,15 @@ val port = EasySerialBuilder.createKeepReceivePort<ByteArray>(
         )
 ```
 
-B). 设置单次接收数据的最大字节数,默认为64个字节；
+B). 设置串口每次从数据流中读取的最大字节数，默认为64个字节；   
+1. 注意：必须在调用[addDataCallBack]之前设置，否则设置无效；
 ```Kotlin
-port.setBufferSize(64)
+port.setMaxReadSize(64)
 ```
 
 C).设置数据的读取间隔；   
-即上一次读取完数据后,隔多少秒后读取下一次数据；   
-默认为10毫秒,读取时间越短，CPU的占用会越高,请合理配置此设置；
+1. 即上一次读取完数据后,隔多少秒后读取下一次数据；   
+2. 默认为10毫秒，读取时间越短，CPU的占用会越高，请合理配置此设置；
 ```Kotlin
 port.setReadInterval(100)
 ```
@@ -126,14 +127,15 @@ val port = EasySerialBuilder.createKeepReceivePort<String?>(
         )
 ```
 
-B). 设置单次接收数据的最大字节数,默认为64个字节；
+B). 设置串口每次从数据流中读取的最大字节数，默认为64个字节；   
+注意：必须在调用[addDataCallBack]之前设置，否则设置无效；
 ```Kotlin
-port.setBufferSize(64)
+port.setMaxReadSize(64)
 ```
 
 C).设置数据的读取间隔；   
-即上一次读取完数据后,隔多少秒后读取下一次数据；   
-默认为10毫秒,读取时间越短，CPU的占用会越高,请合理配置此设置；
+1. 即上一次读取完数据后,隔多少秒后读取下一次数据；   
+2. 默认为10毫秒,读取时间越短，CPU的占用会越高,请合理配置此设置；
 ```Kotlin
 port.setReadInterval(100)
 ```
@@ -227,14 +229,16 @@ val port = EasySerialBuilder.createWaitRspPort(
         )
 ```
 
-B). 设置单次接收数据的最大字节数,默认为64个字节；
+B). 设置串口每次从数据流中读取的最大字节数，默认为64个字节；   
+1. 对于不可读取字节数的串口，必须在调用[writeWaitRsp]或[writeAllWaitRsp]之前调用，否则设置无效;   
+2. 在请求时不指定接收数据的最大字节数时，将会使用这里配置的字节大小；
 ```Kotlin
-port.setBufferSize(64)
+port.setMaxReadSize(64)
 ```
 
 C).设置数据的读取间隔；   
-即上一次读取完数据后,隔多少秒后读取下一次数据；   
-默认为10毫秒,读取时间越短，CPU的占用会越高,请合理配置此设置；
+1. 即上一次读取完数据后,隔多少秒后读取下一次数据；   
+2. 默认为10毫秒，读取时间越短，CPU的占用会越高，请合理配置此设置；
 ```Kotlin
 port.setReadInterval(100)
 ```
@@ -248,15 +252,21 @@ val rspBean : WaitResponseBean = port.writeWaitRsp(orderByteArray1)
 ```
 此外，我们也可以在调用此函数时指定等待时长，此处我们演示等待500ms：
 ```kotlin
-val rspBean : WaitResponseBean = port.writeWaitRsp(orderByteArray1, 500)
+val rspBean : WaitResponseBean = port.writeWaitRsp(orderByteArray1, timeOut = 500)
 ```
+还可以,指定本次请求接收的数据的最大字节数,如下示例:
+```kotlin
+val rspBean : WaitResponseBean = port.writeWaitRsp(orderByteArray1, bufferSize = 64)
+```
+
 ```rspBean```是一个封装的数据类,我们来讲解一下：
 ```kotlin
 rspBean.bytes
 ```
-这是串口返回的数据,此字节数组的大小为我们```setBufferSize()```时输入的字节大小；需要注意的是,字节数组内的字节并不全是串口返回的数据；
+这是串口返回的数据，此字节数组的大小为调用写入时指定的bufferSize的大小；   
+需要注意的是，字节数组内的字节并不全是串口返回的数据；
 
-默认的字节数组大小为64，我们假设串口返回了4个字节的数据，那么其余的60个字节都是0；
+默认的bufferSize大小为64，我们假设串口返回了4个字节的数据，那么其余的60个字节都是0；
 
 那我们怎么知道实际收到了多少个字节呢？这就需要用到数据类内的另一个数据：
 ```kotlin
@@ -273,8 +283,17 @@ val portBytes = rspBean.bytes.copyOf(rspBean.size)
 
 **2. 有时候，我们可能需要连续向串口输出命令，并等待其返回,对此我们也提供了便捷的方案：**
 ```kotlin
+val rspBeanList : MutableList<WaitResponseBean> = port.writeAllWaitRsp(orderByteArray1, orderByteArray2, orderByteArray3)
+```
+或者是指定每个请求的超时时间：
+```kotlin
 val rspBeanList : MutableList<WaitResponseBean> = port.writeAllWaitRsp(200, orderByteArray1, orderByteArray2, orderByteArray3)
 ```
+又或者，即指定每个请求的超时时间，也指定每个请求接收数据的最大字节数：
+```kotlin
+val rspBeanList : MutableList<WaitResponseBean> = port.writeAllWaitRsp(200, 64, orderByteArray1, orderByteArray2, orderByteArray3)
+```
+
 同样的，此方法也是需要在协程作用域中调用；
 
 我们来讲解一下函数参数：

@@ -75,8 +75,7 @@ internal object ErgodicPortUtil {
                                             stop,
                                             event.parity
                                         )
-                                        val easyWaitRspPort = EasyWaitRspPort()
-                                        easyWaitRspPort.initSerialPort(serialPort)
+                                        val easyWaitRspPort = EasyWaitRspPort(serialPort)
                                         val dataList = easyWaitRspPort.writeWaitRsp(it)
                                         if (dataList.size > 0) {
                                             Log.w(

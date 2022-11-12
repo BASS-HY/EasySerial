@@ -34,8 +34,10 @@ class WaitRspDemo1 {
         //串口可能会开启失败,在这里做简单判断；
         val port = tempPort ?: return
 
-        //设置单词接收数据的最大字节数,默认为64个字节；
-        port.setBufferSize(64)
+        //设置串口每次从数据流中读取的最大字节数,默认为64个字节；
+        //对于不可读取字节数的串口，必须在调用[writeWaitRsp]或[writeAllWaitRsp]之前调用，否则设置无效；
+        //在请求时不指定接收数据的最大字节数时，将会使用这里配置的字节大小；
+        port.setMaxReadSize(64)
 
         //设置数据的读取间隔,即上一次读取完数据后,隔多少秒后读取下一次数据；
         //默认为10毫秒,读取时间越短，CPU的占用会越高,请合理配置此设置；
@@ -52,7 +54,9 @@ class WaitRspDemo1 {
             //即调用此函数,将会阻塞200ms,并将此期间接收到的串口数据返回给调用方；
             val rspBean = port.writeWaitRsp(orderByteArray1)
             //此外，我们也可以指定等待时间,如下示例:
-            val rspBean2 = port.writeWaitRsp(orderByteArray1, 500)
+            val rspBean2 = port.writeWaitRsp(orderByteArray1, timeOut = 500)
+            //还可以,指定本次请求接收的数据的最大字节数,如下示例:
+            val rspBean3 = port.writeWaitRsp(orderByteArray1, bufferSize = 64)
 
             //讲解一下返回的数据：
             rspBean.bytes
@@ -75,12 +79,18 @@ class WaitRspDemo1 {
         CoroutineScope(Dispatchers.IO).launch {
             //此方法我们必须在协程作用域中调用
             //调用此方法我们内部将按照顺序一个一个请求并收集结果,将结果返回
-            val rspBeanList =
+            val rspBeanList1 =
+                port.writeAllWaitRsp(orderByteArray1, orderByteArray2, orderByteArray3)
+            //或者是指定每个请求的超时时间：
+            val rspBeanList2 =
                 port.writeAllWaitRsp(200, orderByteArray1, orderByteArray2, orderByteArray3)
+            //又或者，即指定每个请求的超时时间，也指定每个请求接收数据的最大字节数：
+            val rspBeanList3 =
+                port.writeAllWaitRsp(200, 64, orderByteArray1, orderByteArray2, orderByteArray3)
             //以下返回的数据与请求一一对应：
-            val rspBean1 = rspBeanList[0]//orderByteArray1
-            val rspBean2 = rspBeanList[1]//orderByteArray2
-            val rspBean3 = rspBeanList[2]//orderByteArray3
+            val rspBean1 = rspBeanList1[0]//orderByteArray1
+            val rspBean2 = rspBeanList1[1]//orderByteArray2
+            val rspBean3 = rspBeanList1[2]//orderByteArray3
 
             //在获取到后做我们自己的业务逻辑
             Log.d(tag, "接收到数据:${rspBean1.bytes.conver2HexString(rspBean1.size)}")

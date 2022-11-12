@@ -47,7 +47,8 @@ class SerialPort(
     private var mFileOutputStream: FileOutputStream? = null//串口写入流
     private var readJob: Job? = null//重复读取的协程
     private var readDataCallBack: EasyReadDataCallBack? = null//串口读取数据观察者
-    private var bufferSize = 64
+    private var readInterval = 10L//串口数据读取的间隔 单位为毫秒
+
 
     companion object {
         init {
@@ -84,11 +85,10 @@ class SerialPort(
     }
 
     //开始永久接收
-    internal fun startRead(bufferSize: Int, readInterval: Long) {
+    internal fun startRead(maxReadSize: Int) {
         readJob?.let { return }
-        this.bufferSize = bufferSize
         readJob = CoroutineScope(Dispatchers.IO).launch {
-            val buffer = ByteArray(bufferSize)
+            val buffer = ByteArray(maxReadSize)
             var size: Int
             while (isActive) {
                 try {
@@ -114,6 +114,11 @@ class SerialPort(
         withTimeoutOrNull(200) { tryCatchSuspend { readJob?.cancelAndJoin() } }
         readJob = null
         readDataCallBack = null
+    }
+
+    //设置串口读取的间隔
+    internal fun setReadInterval(readInterval: Long) {
+        this.readInterval = readInterval
     }
 
     //监听串口数据
@@ -151,7 +156,7 @@ class SerialPort(
         }
         //2.判断可读的字节数是否合规
         if (availableSize < 0) availableSize = 0
-        else if (availableSize > bufferSize) availableSize = bufferSize
+        else if (availableSize > buffer.size) availableSize = buffer.size
         //3.读取超时限定 读取指定长度的数据,如果不指定长度,在无法读取时可能会阻塞协程
         return blockWithTimeoutOrNull(10) {
             inputStream.read(buffer, 0, availableSize)

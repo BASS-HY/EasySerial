@@ -25,21 +25,15 @@ import com.bass.easySerial.SerialPort
  * 串口通信的基类
  */
 @Suppress("unused", "SpellCheckingInspection")
-abstract class BaseEasySerialPort internal constructor() {
+abstract class BaseEasySerialPort internal constructor(protected val serialPort: SerialPort) {
 
-    protected var serialPort: SerialPort? = null//串口通信类
-    protected var customBufferSize = 64//串口单次接收数据的最大字节数
-    protected var readInterval = 10L//串口数据读取的间隔 单位为毫秒
-
-    internal fun initSerialPort(serialPort: SerialPort) {
-        this.serialPort = serialPort
-    }
+    protected var customMaxReadSize = 64//串口每次从数据流中读取的最大字节数
 
     /**
      * 获取串口的名称
      * 如：/dev/ttyS4
      */
-    fun getPortPath() = serialPort?.getDevicePath()
+    fun getPortPath() = serialPort.getDevicePath()
 
     /**
      * 强转成 [EasyKeepReceivePort]
@@ -65,7 +59,7 @@ abstract class BaseEasySerialPort internal constructor() {
      */
     open suspend fun close() {
         //关闭串口
-        serialPort?.closeSerial()
+        serialPort.closeSerial()
         //移除串口类实例,下次才可再创建
         EasySerialBuilder.remove(this)
     }
