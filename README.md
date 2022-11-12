@@ -436,7 +436,7 @@ val charArray4 = byteArray2.conver2CharArray(2, 2)//即:"H"
 
 #  三、传送门
 1. [github地址](https://github.com/BASS-HY/EasySerial)   
-2. [CSDN地址](https://blog.csdn.net/weixin_45379305/article/details/127719263)   
+2. [CSDN地址](http://t.csdn.cn/E5e9V)   
 3. 如果有什么意见和建议都可以在github或者在CSDN中向我提出噢，我也会一直完善此项目的；
 
 # 四、鸣谢
