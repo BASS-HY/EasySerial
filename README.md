@@ -1,9 +1,11 @@
-
 # 一、前言
 
 --------------------------------------------------------------------------
 
-1. **此SDK用于Android端的串口通信，此项目的C代码移植于谷歌官方串口库[android-serialport-api](https://code.google.com/archive/p/android-serialport-api/) ，以及[GeekBugs-Android-SerialPort](https://github.com/GeekBugs/Android-SerialPort) ；在此基础上，我进行了封装，目的是让开发者可以更加快速的进行串口通信；**
+1. **
+   此SDK用于Android端的串口通信，此项目的C代码移植于谷歌官方串口库[android-serialport-api](https://code.google.com/archive/p/android-serialport-api/)
+   ，以及[GeekBugs-Android-SerialPort](https://github.com/GeekBugs/Android-SerialPort)
+   ；在此基础上，我进行了封装，目的是让开发者可以更加快速的进行串口通信；**
 2. **此SDK可以创建2种不同作用的串口对象，一个是保持串口接收的串口对象，一个是写入并同步等待数据返回的串口对象；**
 3. **当前仅支持Kotlin项目使用，对于java调用做的并不完美；**
 4. **此SDK本人已经在多个项目中实践使用，并在github上进行开源，如果你在使用中有任何问题，请在issue中向我提出；**
@@ -15,8 +17,10 @@
 
 --------------------------------------------------------------------------
 
-##  引入库
+## 引入库
+
 在Build.gradle(:project)下导入jitpack库
+
 ```groovy
 allprojects {
     repositories {
@@ -24,7 +28,9 @@ allprojects {
     }
 }
 ```
+
 在新版gradle中，在settings.gradle下导入jitpack库
+
 ```groovy
 dependencyResolutionManagement {
     repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
@@ -33,10 +39,12 @@ dependencyResolutionManagement {
     }
 }
 ```
+
 在Build.gradle(:module)中添加：
+
 ```groovy
 dependencies {
-    implementation 'com.github.BASS-HY:EasySerial:1.0.0-beta01'
+    implementation 'com.github.BASS-HY:EasySerial:1.0.0-beta02'
 }
 ```
 
@@ -55,58 +63,66 @@ val port = EasySerialBuilder.createKeepReceivePort<ByteArray>("/dev/ttyS4", Baud
 
 ```Kotlin
 val port = EasySerialBuilder.createKeepReceivePort<ByteArray>(
-            "/dev/ttyS4",
-            BaudRate.B4800, DataBit.CS8, StopBit.B1,
-            Parity.NONE, 0, FlowCon.NONE
-        )
+    "/dev/ttyS4",
+    BaudRate.B4800, DataBit.CS8, StopBit.B1,
+    Parity.NONE, 0, FlowCon.NONE
+)
 ```
 
-B). 设置串口每次从数据流中读取的最大字节数，默认为64个字节；   
+B). 设置串口每次从数据流中读取的最大字节数，默认为64个字节；
+
 1. 注意：必须在调用[addDataCallBack]之前设置，否则设置无效；
+
 ```Kotlin
 port.setMaxReadSize(64)
 ```
 
-C).设置数据的读取间隔；   
-1. 即上一次读取完数据后,隔多少秒后读取下一次数据；   
+C).设置数据的读取间隔；
+
+1. 即上一次读取完数据后,隔多少秒后读取下一次数据；
 2. 默认为10毫秒，读取时间越短，CPU的占用会越高，请合理配置此设置；
+
 ```Kotlin
 port.setReadInterval(100)
 ```
 
 D). 监听串口返回的数据;    
 第一种写法；须注意，此回调处于协程之中；
+
 ```Kotlin
 val dataCallBack = port.addDataCallBack {
-            //处理项目逻辑；
-            // 此处示范将串口数据转化为16进制字符串；
-            val hexString = it.conver2HexString()
-            Log.d(tag, "接收到串口数据:$hexString")
-        }
+    //处理项目逻辑；
+    // 此处示范将串口数据转化为16进制字符串；
+    val hexString = it.conver2HexString()
+    Log.d(tag, "接收到串口数据:$hexString")
+}
 port.addDataCallBack(dataCallBack)
 ```
+
 第二种写法；须注意，此回调处于协程之中；
+
 ```Kotlin
 val dataCallBack = object : EasyReceiveCallBack<ByteArray> {
-            override suspend fun receiveData(data: ByteArray) {
-                //处理项目逻辑；
-                //此处示范将串口数据转化为16进制字符串；
-                val hexString = data.conver2HexString()
-                Log.d(tag, "接收到串口数据:$hexString")
-            }
+    override suspend fun receiveData(data: ByteArray) {
+        //处理项目逻辑；
+        //此处示范将串口数据转化为16进制字符串；
+        val hexString = data.conver2HexString()
+        Log.d(tag, "接收到串口数据:$hexString")
+    }
 
-        }
+}
 port.addDataCallBack(dataCallBack)
 ```
 
 E). 移除串口监听；
+
 ```Kotlin
  port.removeDataCallBack(dataCallBack)
 ```
 
 F). 关闭串口；   
-使用完毕关闭串口，关闭串口须在作用域中关闭，关闭时会阻塞当前协程，直到关闭处理完成；
-这个过程并不会耗费太长时间,一般为1ms-4ms;
+使用完毕关闭串口，关闭串口须在作用域中关闭，关闭时会阻塞当前协程，直到关闭处理完成； 这个过程并不会耗费太长时间,一般为1ms-4ms;
+
 ```Kotlin
 CoroutineScope(Dispatchers.IO).launch { port.close() }
 ```
@@ -115,36 +131,45 @@ CoroutineScope(Dispatchers.IO).launch { port.close() }
 演示：自定义回调的数据类型，在接收到串口数据后对数据进行一次处理，再将数据返回给串口数据监听者；**
 
 A). 创建一个串口,串口返回的数据类型,我们自定义为可为null的String类型；
+
 ```Kotlin
 val port = EasySerialBuilder.createKeepReceivePort<String?>("/dev/ttyS4", BaudRate.B4800)
 ```
+
 我们还可以这样创建串口,串口返回的数据类型,我们自定义为可为null的String类型；
+
 ```Kotlin
 val port = EasySerialBuilder.createKeepReceivePort<String?>(
-            "/dev/ttyS4",
-            BaudRate.B4800, DataBit.CS8, StopBit.B1,
-            Parity.NONE, 0, FlowCon.NONE
-        )
+    "/dev/ttyS4",
+    BaudRate.B4800, DataBit.CS8, StopBit.B1,
+    Parity.NONE, 0, FlowCon.NONE
+)
 ```
 
 B). 设置串口每次从数据流中读取的最大字节数，默认为64个字节；   
 注意：必须在调用[addDataCallBack]之前设置，否则设置无效；
+
 ```Kotlin
 port.setMaxReadSize(64)
 ```
 
-C).设置数据的读取间隔；   
-1. 即上一次读取完数据后,隔多少秒后读取下一次数据；   
+C).设置数据的读取间隔；
+
+1. 即上一次读取完数据后,隔多少秒后读取下一次数据；
 2. 默认为10毫秒,读取时间越短，CPU的占用会越高,请合理配置此设置；
+
 ```Kotlin
 port.setReadInterval(100)
 ```
 
 D).因为我们设置数据返回类型不再是默认的ByteArray类型，所以我们需要设置自定义的数据解析规则；
+
 ```Kotlin
  port.setDataHandle(CustomEasyPortDataHandle())
 ```
+
 接下来我们创建一个自定义解析类,并将其命令为CustomEasyPortDataHandle；
+
 ```Kotlin
 class CustomEasyPortDataHandle : EasyPortDataHandle<String?>() {
 
@@ -192,20 +217,22 @@ class CustomEasyPortDataHandle : EasyPortDataHandle<String?>() {
 
 E). 监听串口返回的数据；   
 此时，我们监听到的数据为我们一开始设置的String?类型；
+
 ```kotlin
   val dataCallBack = object : EasyReceiveCallBack<String?> {
-            override suspend fun receiveData(data: String?) {
-                //为Null是我们自定义的不完整的数据的情况,我们这里不处理不完整的数据；
-                data ?: return
-                //处理项目逻辑；
-                //此处演示直接将转化后的数据类型打印出来；
-                Log.d(tag, "接收到串口数据:$data")
-            }
+    override suspend fun receiveData(data: String?) {
+        //为Null是我们自定义的不完整的数据的情况,我们这里不处理不完整的数据；
+        data ?: return
+        //处理项目逻辑；
+        //此处演示直接将转化后的数据类型打印出来；
+        Log.d(tag, "接收到串口数据:$data")
+    }
 
-        }
+}
 ```
 
 F). 移除串口监听，关闭串口与之前的一致;
+
 ```kotlin
 port.addDataCallBack(dataCallBack)//添加串口数据监听
 port.removeDataCallBack(dataCallBack)//移除串口数据监听
@@ -217,28 +244,35 @@ CoroutineScope(Dispatchers.IO).launch { port.close() }//关闭串口
 ## EasyWaitRspPort的使用
 
 A). 创建一个发送后再接收的串口(串口开启失败返回Null)；
+
 ```kotlin
 val port = EasySerialBuilder.createWaitRspPort("/dev/ttyS4", BaudRate.B4800)
 ```
+
 我们还可以这样创建串口:
+
 ```kotlin
 val port = EasySerialBuilder.createWaitRspPort(
-            "/dev/ttyS4",
-            BaudRate.B4800, DataBit.CS8, StopBit.B1,
-            Parity.NONE, 0, FlowCon.NONE
-        )
+    "/dev/ttyS4",
+    BaudRate.B4800, DataBit.CS8, StopBit.B1,
+    Parity.NONE, 0, FlowCon.NONE
+)
 ```
 
-B). 设置串口每次从数据流中读取的最大字节数，默认为64个字节；   
-1. 对于不可读取字节数的串口，必须在调用[writeWaitRsp]或[writeAllWaitRsp]之前调用，否则设置无效;   
+B). 设置串口每次从数据流中读取的最大字节数，默认为64个字节；
+
+1. 对于不可读取字节数的串口，必须在调用[writeWaitRsp]或[writeAllWaitRsp]之前调用，否则设置无效;
 2. 在请求时不指定接收数据的最大字节数时，将会使用这里配置的字节大小；
+
 ```Kotlin
 port.setMaxReadSize(64)
 ```
 
-C).设置数据的读取间隔；   
-1. 即上一次读取完数据后,隔多少秒后读取下一次数据；   
+C).设置数据的读取间隔；
+
+1. 即上一次读取完数据后,隔多少秒后读取下一次数据；
 2. 默认为10毫秒，读取时间越短，CPU的占用会越高，请合理配置此设置；
+
 ```Kotlin
 port.setReadInterval(100)
 ```
@@ -247,51 +281,71 @@ D). 接下来演示发送串口命令的3种方法
 
 **1. 调用写入函数，并阻塞等待200ms，阻塞完成之后将会返回此期间接收到的串口数据；**   
 需要注意的是,此方法需要在协程作用域中调用；
+
 ```kotlin
-val rspBean : WaitResponseBean = port.writeWaitRsp(orderByteArray1)
+val rspBean: WaitResponseBean = port.writeWaitRsp(orderByteArray1)
 ```
+
 此外，我们也可以在调用此函数时指定等待时长，此处我们演示等待500ms：
+
 ```kotlin
-val rspBean : WaitResponseBean = port.writeWaitRsp(orderByteArray1, timeOut = 500)
+val rspBean: WaitResponseBean = port.writeWaitRsp(orderByteArray1, timeOut = 500)
 ```
+
 还可以,指定本次请求接收的数据的最大字节数,如下示例:
+
 ```kotlin
-val rspBean : WaitResponseBean = port.writeWaitRsp(orderByteArray1, bufferSize = 64)
+val rspBean: WaitResponseBean = port.writeWaitRsp(orderByteArray1, bufferSize = 64)
 ```
 
 ```rspBean```是一个封装的数据类,我们来讲解一下：
+
 ```kotlin
 rspBean.bytes
 ```
+
 这是串口返回的数据，此字节数组的大小为调用写入时指定的bufferSize的大小；   
 需要注意的是，字节数组内的字节并不全是串口返回的数据；
 
 默认的bufferSize大小为64，我们假设串口返回了4个字节的数据，那么其余的60个字节都是0；
 
 那我们怎么知道实际收到了多少个字节呢？这就需要用到数据类内的另一个数据：
+
 ```kotlin
 rspBean.size
 ```
+
 这是串口实际读取的字节长度，所以我们取串口返回的实际字节数组可以这样取：
+
 ```kotlin
 val portBytes = rspBean.bytes.copyOf(rspBean.size)
 ```
+
 插句题外话，我们也提供了直接将读取到的字节转为16进制字符串的方法:
+
 ```kotlin
  val hexString = rspBean.bytes.conver2HexString(rspBean.size)
 ```
 
 **2. 有时候，我们可能需要连续向串口输出命令，并等待其返回,对此我们也提供了便捷的方案：**
+
 ```kotlin
-val rspBeanList : MutableList<WaitResponseBean> = port.writeAllWaitRsp(orderByteArray1, orderByteArray2, orderByteArray3)
+val rspBeanList: MutableList<WaitResponseBean> =
+    port.writeAllWaitRsp(orderByteArray1, orderByteArray2, orderByteArray3)
 ```
+
 或者是指定每个请求的超时时间：
+
 ```kotlin
-val rspBeanList : MutableList<WaitResponseBean> = port.writeAllWaitRsp(200, orderByteArray1, orderByteArray2, orderByteArray3)
+val rspBeanList: MutableList<WaitResponseBean> =
+    port.writeAllWaitRsp(200, orderByteArray1, orderByteArray2, orderByteArray3)
 ```
+
 又或者，即指定每个请求的超时时间，也指定每个请求接收数据的最大字节数：
+
 ```kotlin
-val rspBeanList : MutableList<WaitResponseBean> = port.writeAllWaitRsp(200, 64, orderByteArray1, orderByteArray2, orderByteArray3)
+val rspBeanList: MutableList<WaitResponseBean> =
+    port.writeAllWaitRsp(200, 64, orderByteArray1, orderByteArray2, orderByteArray3)
 ```
 
 同样的，此方法也是需要在协程作用域中调用；
@@ -302,22 +356,26 @@ val rspBeanList : MutableList<WaitResponseBean> = port.writeAllWaitRsp(200, 64, 
 
 第2个参数：一个数组类型，即我们想写入并等待返回的所有指令集；
 
-```rspBeanList```为多个```WaitResponseBean```的集合，我们在上面已经讲解了```WaitResponseBean```，此处不再赘述；集合中的数据与请求是一一对应：
+```rspBeanList```为多个```WaitResponseBean```的集合，我们在上面已经讲解了```WaitResponseBean```
+，此处不再赘述；集合中的数据与请求是一一对应：
+
 ```kotlin
-val rspBean1 : WaitResponseBean = rspBeanList[0]//orderByteArray1
-val rspBean2 : WaitResponseBean = rspBeanList[1]//orderByteArray2
-val rspBean3 : WaitResponseBean = rspBeanList[2]//orderByteArray3
+val rspBean1: WaitResponseBean = rspBeanList[0]//orderByteArray1
+val rspBean2: WaitResponseBean = rspBeanList[1]//orderByteArray2
+val rspBean3: WaitResponseBean = rspBeanList[2]//orderByteArray3
 ```
 
 **3. 在同一个串口中,我们有些需要等待串口的数据返回,有些是不需要的,在不需要串口数据返回的情况下，我们可以直接调用写入即可:**
+
 ```kotlin
 port.write(orderByteArray1)
 ```
+
 相同的，此方法必须在协程作用域中调用；
 
 E). 关闭串口：  
-使用完毕关闭串口，关闭串口须在协程作用域中关闭，关闭时会阻塞当前协程，直到关闭处理完成；
-这个过程并不会耗费太长时间,一般为1ms-4ms;
+使用完毕关闭串口，关闭串口须在协程作用域中关闭，关闭时会阻塞当前协程，直到关闭处理完成； 这个过程并不会耗费太长时间,一般为1ms-4ms;
+
 ```Kotlin
 CoroutineScope(Dispatchers.IO).launch { port.close() }
 ```
@@ -328,22 +386,29 @@ CoroutineScope(Dispatchers.IO).launch { port.close() }
 
 **1. 获取串口对象：**   
 每一个串口只会创建一个实例，我们在内部缓存了串口实例，即一处创建,到处可取；如果此串口还未创建，则将获取到Null；
+
 ```kotlin
 val serialPort: BaseEasySerialPort? = EasySerialBuilder.get("dev/ttyS4")
 ```
+
 获取到实例后,我们仅可以调用close()方法关闭串口；   
 此方法必须在协程作用域中调用；
+
 ```kotlin
 CoroutineScope(Dispatchers.IO).launch { serialPort.close() }
 ```
+
 如果你明确知道当前串口属于哪种类型,那么你可以进行类型强转后使用更多特性。如:
+
 ```kotlin
 val easyWaitRspPort = serialPort.cast2WaitRspPort()
-CoroutineScope(Dispatchers.IO).launch { 
+CoroutineScope(Dispatchers.IO).launch {
     val rspBean = easyWaitRspPort.writeWaitRsp("00 FF AA".conver2ByteArray())
 }
 ```
+
 或者是：
+
 ```kotlin
 val keepReceivePort = serialPort.cast2KeepReceivePort<ByteArray>()
 keepReceivePort.write("00 FF AA".conver2ByteArray())
@@ -351,14 +416,18 @@ keepReceivePort.write("00 FF AA".conver2ByteArray())
 
 **2. 设置串口不读取字节数：**   
 如果你发现，串口无法收到数据，但是可正常写入数据，使用串口调试工具可正常收发，那么你应当试试如下将串口设置为无法读取字节数：
+
 ```kotlin
 EasySerialBuilder.addNoAvailableDevicePath("dev/ttyS4")
 ```
+
 设置完后再开启串口,否则设置不生效；也可以直接这么写：
+
 ```kotlin
 EasySerialBuilder.addNoAvailableDevicePath("dev/ttyS4")
     .createWaitRspPort("dev/ttyS4", BaudRate.B4800)
 ```
+
 对于`addNoAvailableDevicePath()`方法，需要讲解一下内部串口数据读取的实现了；   
 在读取数据时，会先调用`inputStream.available()` 来判断流中有多少个可读字节，但在部分串口中，即使有数据，
 `available()`读取到的依旧是0，这就导致了无法读取到数据的情况；   
@@ -366,11 +435,14 @@ EasySerialBuilder.addNoAvailableDevicePath("dev/ttyS4")
 当你使用此方法后，请勿重复开启\关闭串口， 因为这样可能会导致串口无法再工作；
 
 **3. 获取本设备所有的串口名称：**
+
 ```kotlin
 val allDevicesPath: MutableList<String> = EasySerialFinderUtil.getAllDevicesPath()
 allDevicesPath.forEach { Log.d(tag, "串口名称: $it") }
 ```
+
 **4. 判断当前是否有串口正在使用：**
+
 ```kotlin
 val hasPortWorking: Boolean = EasySerialBuilder.hasPortWorking()
 ```
@@ -379,12 +451,14 @@ val hasPortWorking: Boolean = EasySerialBuilder.hasPortWorking()
 是否打印串口通信日志 true为打印日志,false为不打印；   
 建议在Release版本中不打印串口日志；   
 打印的日志的 tag = "EasyPort"；
+
 ```kotlin
 EasySerialBuilder.isShowLog(true)
 ```
 
 **6. 数据转化：**   
 A). 16进制字符串转为字节数组：
+
 ```kotlin
 val hexString = "00 FF CA FA"
 //将16进制字符串 转为 字节数组
@@ -396,6 +470,7 @@ val hexByteArray3 = hexString.conver2ByteArray(2, 4)
 ```
 
 B). 字节数组转为16进制字符串：
+
 ```kotlin
 val byteArray = byteArrayOf(0, -1, 10)// 此字节数组=="00FF0A"
 //将字节数组 转为 16进制字符串
@@ -422,8 +497,10 @@ val hexStr10 = byteArray.conver2HexStringWithBlank(1, 1, false)//结果为:"ff"
 ```
 
 C). 字节数组转为字符数组：
+
 ```kotlin
-val byteArray2 = byteArrayOf('H'.code.toByte(), 'A'.code.toByte(), 'H'.code.toByte(), 'A'.code.toByte())
+val byteArray2 =
+    byteArrayOf('H'.code.toByte(), 'A'.code.toByte(), 'H'.code.toByte(), 'A'.code.toByte())
 //将字节数组 转为 字符数组
 val charArray1 = byteArray2.conver2CharArray()//即:"HAHA"
 //将字节数组取1位 转为 字符数组
@@ -434,15 +511,36 @@ val charArray3 = byteArray2.conver2CharArray(2, 3)//即:"HA"
 val charArray4 = byteArray2.conver2CharArray(2, 2)//即:"H"
 ```
 
-#  三、传送门
-1. [github地址](https://github.com/BASS-HY/EasySerial)   
-2. [CSDN地址](http://t.csdn.cn/E5e9V)   
+D). 字节数组计算CRC值：
+
+```kotlin
+val byteArray3 = byteArrayOf(1, 3, 0, 0, 0, 9)
+//计算字节数组的CRC值：
+val crc1 = byteArray3.getCRC()
+//将字节数组取2位，计算CRC值：
+val crc2 = byteArray3.getCRC(2)
+//将字节数组取第2位到第3位，计算CRC值：
+val crc3 = byteArray3.getCRC(2, 3)
+
+//将crc转为字节的计算示例：
+val highByte = (crc1 and 0xFF).toByte()//高位
+val lowByte = (crc1 shr 8 and 0xFF).toByte()//低位
+```
+
+# 三、传送门
+
+1. [github地址](https://github.com/BASS-HY/EasySerial)
+2. [CSDN地址](https://blog.csdn.net/weixin_45379305/article/details/127719263?spm=1001.2014.3001.5501)
 3. 如果有什么意见和建议都可以在github或者在CSDN中向我提出噢，我也会一直完善此项目的；
 
 # 四、鸣谢
-此项目移植于谷歌官方串口库[android-serialport-api](https://code.google.com/archive/p/android-serialport-api/) ，以及[GeekBugs-Android-SerialPort](https://github.com/GeekBugs/Android-SerialPort) ，综合了这俩个库的C代码，对其进行的封装；
+
+此项目移植于谷歌官方串口库[android-serialport-api](https://code.google.com/archive/p/android-serialport-api/)
+，以及[GeekBugs-Android-SerialPort](https://github.com/GeekBugs/Android-SerialPort)
+，综合了这俩个库的C代码，对其进行的封装；
 
 # 五、许可证
+
 ``` 
 Copyright 2022 BASS
 

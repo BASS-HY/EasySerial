@@ -3,10 +3,7 @@ package com.bass.easyserialport.other
 import android.util.Log
 import com.bass.easySerial.EasySerialBuilder
 import com.bass.easySerial.enums.BaudRate
-import com.bass.easySerial.extend.conver2ByteArray
-import com.bass.easySerial.extend.conver2CharArray
-import com.bass.easySerial.extend.conver2HexString
-import com.bass.easySerial.extend.conver2HexStringWithBlank
+import com.bass.easySerial.extend.*
 import com.bass.easySerial.util.EasySerialFinderUtil
 import com.bass.easySerial.wrapper.BaseEasySerialPort
 import kotlinx.coroutines.CoroutineScope
@@ -16,7 +13,7 @@ import kotlinx.coroutines.launch
 /**
  * Create by BASS
  * on 2022/10/31 23:42.
- * 其他API的调用Demo
+ * 其他API的调用示例
  */
 class OtherApiDemo {
 
@@ -146,6 +143,22 @@ class OtherApiDemo {
         val charArray3 = byteArray2.conver2CharArray(2, 3)//即:"HA"
         //将字节数组第2位 转为 字符数组
         val charArray4 = byteArray2.conver2CharArray(2, 2)//即:"H"
+        /** -----------   字节数组转为字符数组    end ------------------*/
+
+
+        /** -----------   字节数组计算CRC值   start------------------*/
+        val byteArray3 = byteArrayOf(1, 3, 0, 0, 0, 9)
+        //计算字节数组的CRC值：
+        val crc1 = byteArray3.getCRC()
+        //将字节数组取2位，计算CRC值：
+        val crc2 = byteArray3.getCRC(2)
+        //将字节数组取第2位到第3位，计算CRC值：
+        val crc3 = byteArray3.getCRC(2, 3)
+
+        //将crc转为字节的计算示例：
+        val highByte = (crc1 and 0xFF).toByte()//高位
+        val lowByte = (crc1 shr 8 and 0xFF).toByte()//低位
+        /** -----------   字节数组计算CRC值    end ------------------*/
     }
 
 }

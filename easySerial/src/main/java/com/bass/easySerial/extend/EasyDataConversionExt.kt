@@ -169,3 +169,44 @@ fun ByteArray.conver2CharArray(startIndex: Int, endIndex: Int): CharArray {
     val size = (endIndex - startIndex) + 1
     return CharArray(size) { this[it + startIndex].toInt().toChar() }
 }
+
+/**
+ * byteArray计算CRC值
+ */
+fun ByteArray.getCRC(size: Int = this.size): Int {
+    // 预置 1 个 16 位的寄存器为十六进制0xFFFF, 称此寄存器为 CRC寄存器。
+    var crc = 0xFFFF
+    for (i in 0 until size) {
+        // 把第一个 8 位二进制数据 与 16 位的 CRC寄存器的低 8 位相异或, 把结果放于 CRC寄存器
+        crc = crc and 0xFF00 or (crc and 0x00FF) xor (this[i].toInt() and 0xFF)
+        repeat(8) {
+            // 把 CRC 寄存器的内容右移一位( 朝低位)用 0 填补最高位, 并检查右移后的移出位
+            if (crc and 0x0001 > 0) {// 如果移出位为 1, CRC寄存器与多项式A001进行异或
+                crc = crc shr 1
+                crc = crc xor 0xA001
+            } else crc = crc shr 1// 如果移出位为 0,再次右移一位
+        }
+    }
+    return crc
+}
+
+/**
+ * byteArray计算CRC值
+ */
+fun ByteArray.getCRC(startIndex: Int, endIndex: Int): Int {
+    if (isEmpty() || startIndex < 0 || endIndex < 0) throw RuntimeException("计算CRC时发生错误,请检查参数")
+    // 预置 1 个 16 位的寄存器为十六进制0xFFFF, 称此寄存器为 CRC寄存器。
+    var crc = 0xFFFF
+    for (i in startIndex..endIndex) {
+        // 把第一个 8 位二进制数据 与 16 位的 CRC寄存器的低 8 位相异或, 把结果放于 CRC寄存器
+        crc = crc and 0xFF00 or (crc and 0x00FF) xor (this[i].toInt() and 0xFF)
+        repeat(8) {
+            // 把 CRC 寄存器的内容右移一位( 朝低位)用 0 填补最高位, 并检查右移后的移出位
+            if (crc and 0x0001 > 0) {// 如果移出位为 1, CRC寄存器与多项式A001进行异或
+                crc = crc shr 1
+                crc = crc xor 0xA001
+            } else crc = crc shr 1// 如果移出位为 0,再次右移一位
+        }
+    }
+    return crc
+}
