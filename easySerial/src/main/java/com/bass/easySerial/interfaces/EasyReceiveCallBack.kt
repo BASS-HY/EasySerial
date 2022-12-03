@@ -25,8 +25,8 @@ interface EasyReceiveCallBack<CallBackType> {
 
     /**
      * 返回处理后的串口数据给监听者
-     * @param data 处理后的串口数据
+     * @param dataList 处理后的串口数据
      */
-    suspend fun receiveData(data: CallBackType)
+    suspend fun receiveData(dataList: List<CallBackType>)
 
 }

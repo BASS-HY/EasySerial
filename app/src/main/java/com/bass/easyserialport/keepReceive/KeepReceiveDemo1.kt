@@ -52,7 +52,8 @@ class KeepReceiveDemo1 {
         val dataCallBack1 = port.addDataCallBack {
             //处理项目逻辑；
             // 此处示范将串口数据转化为16进制字符串；
-            val hexString = it.conver2HexString()
+            if (it.isEmpty()) return@addDataCallBack
+            val hexString = it.last().conver2HexString()
             Log.d(tag, "接收到串口数据:$hexString")
         }
         //在我们不再需要使用的时候,可以移除串口监听；
@@ -60,10 +61,11 @@ class KeepReceiveDemo1 {
 
         //监听串口返回的数据,第二种写法；须注意，此回调处于协程之中；
         val dataCallBack2 = object : EasyReceiveCallBack<ByteArray> {
-            override suspend fun receiveData(data: ByteArray) {
+            override suspend fun receiveData(dataList: List<ByteArray>) {
                 //处理项目逻辑；
                 //此处示范将串口数据转化为16进制字符串；
-                val hexString = data.conver2HexString()
+                if (dataList.isEmpty()) return
+                val hexString = dataList.last().conver2HexString()
                 Log.d(tag, "接收到串口数据:$hexString")
             }
 

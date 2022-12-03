@@ -2,14 +2,15 @@
 
 --------------------------------------------------------------------------
 
-1. **
-   此SDK用于Android端的串口通信，此项目的C代码移植于谷歌官方串口库[android-serialport-api](https://code.google.com/archive/p/android-serialport-api/)
+1. **如果你的项目需要使用串口通信，并且项目使用了kotlin，那么这个SDK是你不能错过的；**
+2. **如果你使用过串口通信，那么这个SDK最吸引你的地方应当是可在写入时同步阻塞等待数据返回，并且我们支持超时设置；如果你没有使用过串口通信，这个SDK也可以让你快熟的进行串口通信；**
+3. **此SDK用于Android端的串口通信，此项目的C代码移植于谷歌官方串口库[android-serialport-api](https://code.google.com/archive/p/android-serialport-api/)
    ，以及[GeekBugs-Android-SerialPort](https://github.com/GeekBugs/Android-SerialPort)
    ；在此基础上，我进行了封装，目的是让开发者可以更加快速的进行串口通信；**
-2. **此SDK可以创建2种不同作用的串口对象，一个是保持串口接收的串口对象，一个是写入并同步等待数据返回的串口对象；**
-3. **当前仅支持Kotlin项目使用，对于java调用做的并不完美；**
-4. **此SDK本人已经在多个项目中实践使用，并在github上进行开源，如果你在使用中有任何问题，请在issue中向我提出；**
-5. **本SDK不向您保证任何稳定性及可靠性，您将自行承担使用本SDK后可能带来的任何后果；**
+4. **此SDK可以创建2种不同作用的串口对象，一个是保持串口接收的串口对象，一个是写入并同步等待数据返回的串口对象；**
+5. **当前仅支持Kotlin项目使用，对于java调用做的并不完美；**
+6. **此SDK本人已经在多个项目中实践使用，并在github上进行开源，如果你在使用中有任何问题，请在issue中向我提出；**
+7. **本SDK不向您保证任何稳定性及可靠性，您将自行承担使用本SDK后可能带来的任何后果；**
 
 --------------------------------------------------------------------------
 
@@ -44,7 +45,7 @@ dependencyResolutionManagement {
 
 ```groovy
 dependencies {
-    implementation 'com.github.BASS-HY:EasySerial:1.0.0-beta02'
+    implementation 'com.github.BASS-HY:EasySerial:1.0.0-beta03'
 }
 ```
 
@@ -93,7 +94,8 @@ D). 监听串口返回的数据;
 val dataCallBack = port.addDataCallBack {
     //处理项目逻辑；
     // 此处示范将串口数据转化为16进制字符串；
-    val hexString = it.conver2HexString()
+    if (it.isEmpty()) return@addDataCallBack
+    val hexString = it.last().conver2HexString()
     Log.d(tag, "接收到串口数据:$hexString")
 }
 port.addDataCallBack(dataCallBack)
@@ -103,10 +105,11 @@ port.addDataCallBack(dataCallBack)
 
 ```Kotlin
 val dataCallBack = object : EasyReceiveCallBack<ByteArray> {
-    override suspend fun receiveData(data: ByteArray) {
+    override suspend fun receiveData(dataList: List<ByteArray>) {
         //处理项目逻辑；
         //此处示范将串口数据转化为16进制字符串；
-        val hexString = data.conver2HexString()
+        if (dataList.isEmpty()) return
+        val hexString = dataList.last().conver2HexString()
         Log.d(tag, "接收到串口数据:$hexString")
     }
 
@@ -130,16 +133,16 @@ CoroutineScope(Dispatchers.IO).launch { port.close() }
 **2. 创建一个永久接收的串口(串口开启失败返回Null)；   
 演示：自定义回调的数据类型，在接收到串口数据后对数据进行一次处理，再将数据返回给串口数据监听者；**
 
-A). 创建一个串口,串口返回的数据类型,我们自定义为可为null的String类型；
+A). 创建一个串口,串口返回的数据类型,我们自定义为String类型；
 
 ```Kotlin
-val port = EasySerialBuilder.createKeepReceivePort<String?>("/dev/ttyS4", BaudRate.B4800)
+val port = EasySerialBuilder.createKeepReceivePort<String>("/dev/ttyS4", BaudRate.B4800)
 ```
 
-我们还可以这样创建串口,串口返回的数据类型,我们自定义为可为null的String类型；
+我们还可以这样创建串口,串口返回的数据类型,我们自定义为String类型；
 
 ```Kotlin
-val port = EasySerialBuilder.createKeepReceivePort<String?>(
+val port = EasySerialBuilder.createKeepReceivePort<String>(
     "/dev/ttyS4",
     BaudRate.B4800, DataBit.CS8, StopBit.B1,
     Parity.NONE, 0, FlowCon.NONE
@@ -171,8 +174,9 @@ D).因为我们设置数据返回类型不再是默认的ByteArray类型，所�
 接下来我们创建一个自定义解析类,并将其命令为CustomEasyPortDataHandle；
 
 ```Kotlin
-class CustomEasyPortDataHandle : EasyPortDataHandle<String?>() {
+class CustomEasyPortDataHandle : EasyPortDataHandle<String>() {
 
+    private val stringList = mutableListOf<String>()//用于记录数据
     private val stringBuilder = StringBuilder()//用于记录数据
     private val pattern = Pattern.compile("(AT)(.*?)(\r\n)")//用于匹配数据
 
@@ -185,24 +189,33 @@ class CustomEasyPortDataHandle : EasyPortDataHandle<String?>() {
      *
      * 我们可以在这里做很多事情，比如有时候串口返回的数据并不是完整的数据，
      * 它可能有分包返回的情况，我们需要自行凑成一个完整的数据后再返回给监听者，
-     * 在数据不完整的时候我们直接返回Null给监听者,告知他们这不是一个完整的数据；
+     * 在数据不完整的时候我们直接返回空数据集给监听者,告知他们这不是一个完整的数据；
      *
      * 在这里我们做个演示,假设数据返回是以AT开头,换行符为结尾的数据是正常的数据；
      *
      */
-    override suspend fun portData(byteArray: ByteArray): String? {
+    override suspend fun portData(byteArray: ByteArray): List<String> {
+        //清除之前记录的匹配成功的数据
+        stringList.clear()
+
         //将串口数据转为16进制字符串
         val hexString = byteArray.conver2HexString()
         //记录本次读取到的串口数据
         stringBuilder.append(hexString)
-        //寻找记录中符合规则的数据
-        val matcher = pattern.matcher(stringBuilder)
-        //没有寻找到符合规则的数据,则返回Null
-        if (!matcher.find()) return null
-        //寻找到符合规则的数据,将其从记录中删除,并返回数据
-        val group = matcher.group()
-        stringBuilder.delete(matcher.start(), matcher.end())
-        return group
+
+        while (true) {//循环匹配,直到匹配完所有的数据
+            //寻找记录中符合规则的数据
+            val matcher = pattern.matcher(stringBuilder)
+            //没有寻找到符合规则的数据,则返回Null
+            if (!matcher.find()) break
+            //寻找到符合规则的数据,记录匹配成功的数据,并将其从StringBuilder中删除
+            val group = matcher.group()
+            stringList.add(group)
+            stringBuilder.delete(matcher.start(), matcher.end())
+        }
+
+        //返回记录的匹配成功的数据
+        return stringList.toList()
     }
 
     /**
@@ -211,21 +224,23 @@ class CustomEasyPortDataHandle : EasyPortDataHandle<String?>() {
      */
     override fun close() {
         stringBuilder.clear()
+        stringList.clear()
     }
 }
 ```
 
 E). 监听串口返回的数据；   
-此时，我们监听到的数据为我们一开始设置的String?类型；
+此时，我们监听到的数据为我们一开始设置的String类型；
 
 ```kotlin
-  val dataCallBack = object : EasyReceiveCallBack<String?> {
-    override suspend fun receiveData(data: String?) {
-        //为Null是我们自定义的不完整的数据的情况,我们这里不处理不完整的数据；
-        data ?: return
+val dataCallBack = object : EasyReceiveCallBack<String> {
+    override suspend fun receiveData(dataList: List<String>) {
+        //返回的数据集内没有数据,则表明没有匹配成功的数据；
+        //我们这里不处理没有匹配成功的情况；
+        if (dataList.isEmpty()) return
         //处理项目逻辑；
         //此处演示直接将转化后的数据类型打印出来；
-        Log.d(tag, "接收到串口数据:$data")
+        dataList.forEach { Log.d(tag, "接收到串口数据:$it") }
     }
 
 }

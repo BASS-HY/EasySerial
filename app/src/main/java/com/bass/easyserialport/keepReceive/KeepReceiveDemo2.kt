@@ -25,12 +25,12 @@ class KeepReceiveDemo2 {
      * 创建一个永久接收的串口(串口开启失败返回Null)
      */
     fun createPort() {
-        //创建一个串口,串口返回的数据类型,我们自定义为可为null的String类型；
+        //创建一个串口,串口返回的数据类型,我们自定义为String类型；
         val tempPort =
-            EasySerialBuilder.createKeepReceivePort<String?>("/dev/ttyS4", BaudRate.B4800)
+            EasySerialBuilder.createKeepReceivePort<String>("/dev/ttyS4", BaudRate.B4800)
 
-        //我们还可以这样创建串口,串口返回的数据类型,我们自定义为可为null的String类型；
-        val tempPort2 = EasySerialBuilder.createKeepReceivePort<String?>(
+        //我们还可以这样创建串口,串口返回的数据类型,我们自定义为String类型；
+        val tempPort2 = EasySerialBuilder.createKeepReceivePort<String>(
             "/dev/ttyS4",
             BaudRate.B4800, DataBit.CS8, StopBit.B1,
             Parity.NONE, 0, FlowCon.NONE
@@ -52,9 +52,9 @@ class KeepReceiveDemo2 {
 
         //监听串口返回的数据; 第一种写法；须注意，此回调处于协程之中；
         val dataCallBack1 = port.addDataCallBack {
-            //为Null是我们自定义的不完整的数据的情况；
-            //我们这里不处理不完整的数据；
-            it ?: return@addDataCallBack
+            //返回的数据集内没有数据,则表明没有匹配成功的数据；
+            //我们这里不处理没有匹配成功的情况；
+            if (it.isEmpty()) return@addDataCallBack
             //处理项目逻辑；
             //此处演示直接将转化后的数据类型打印出来；
             Log.d(tag, "接收到串口数据:$it")
@@ -63,16 +63,15 @@ class KeepReceiveDemo2 {
         port.removeDataCallBack(dataCallBack1)
 
         //监听串口返回的数据,第二种写法；须注意，此回调处于协程之中；
-        val dataCallBack2 = object : EasyReceiveCallBack<String?> {
-            override suspend fun receiveData(data: String?) {
-                //为Null是我们自定义的不完整的数据的情况；
-                //我们这里不处理不完整的数据；
-                data ?: return
+        val dataCallBack2 = object : EasyReceiveCallBack<String> {
+            override suspend fun receiveData(dataList: List<String>) {
+                //返回的数据集内没有数据,则表明没有匹配成功的数据；
+                //我们这里不处理没有匹配成功的情况；
+                if (dataList.isEmpty()) return
                 //处理项目逻辑；
                 //此处演示直接将转化后的数据类型打印出来；
-                Log.d(tag, "接收到串口数据:$data")
+                dataList.forEach { Log.d(tag, "接收到串口数据:$it") }
             }
-
         }
         port.addDataCallBack(dataCallBack2)
         //在我们不再需要使用的时候,可以移除串口监听；

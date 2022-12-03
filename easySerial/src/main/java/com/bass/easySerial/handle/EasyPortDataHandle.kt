@@ -28,10 +28,8 @@ abstract class EasyPortDataHandle<CallBackType> {
 
     private val mutex = Mutex()//同步锁,防止处理数据的过程太慢,而输入过快,导致接收端数据紊乱的问题
 
-    internal suspend fun receivePortData(byteArray: ByteArray): CallBackType {
-        mutex.withLock {
-            return portData(byteArray)
-        }
+    internal suspend fun receivePortData(byteArray: ByteArray): List<CallBackType> {
+        mutex.withLock { return portData(byteArray) }
     }
 
     /**
@@ -39,7 +37,7 @@ abstract class EasyPortDataHandle<CallBackType> {
      * @param byteArray 串口收到的原始数据
      * @return 返回自定义处理后的数据,此数据将被派发到各个监听者
      */
-    abstract suspend fun portData(byteArray: ByteArray): CallBackType
+    abstract suspend fun portData(byteArray: ByteArray): List<CallBackType>
 
     /**
      * 串口关闭时会回调此方法

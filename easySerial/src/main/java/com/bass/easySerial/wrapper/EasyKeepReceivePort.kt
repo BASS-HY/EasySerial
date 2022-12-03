@@ -45,7 +45,7 @@ class EasyKeepReceivePort<CallBackType> internal constructor(serialPort: SerialP
 
     private val callBackList by lazy { CopyOnWriteArrayList<EasyReceiveCallBack<CallBackType>>() }//监听数据返回
     private var dataHandle: EasyPortDataHandle<CallBackType>? = null//数据处理类
-    private val mutex by lazy { Mutex() }//同步锁 控制并发异常
+    private val openReceiveMutex by lazy { Mutex() }//开启串口接收的同步锁,防止多次开启
     private var isStart = false//标志是否已经开启了数据监听
 
     @Suppress("UNCHECKED_CAST")
@@ -54,11 +54,11 @@ class EasyKeepReceivePort<CallBackType> internal constructor(serialPort: SerialP
         CoroutineScope(Dispatchers.IO).launch {//开启顶层协程,不阻塞串口的读取
             logPortReceiveData(bytes)//输出获取到的数据
             dataHandle?.apply {//自定义了数据处理,则处理数据
-                val handleData = receivePortData(bytes)
-                callBackList.forEach { it.receiveData(handleData) }//处理完成数据后发生给监听者
+                val dataList = receivePortData(bytes)
+                callBackList.forEach { it.receiveData(dataList) }//处理完成数据后发生给监听者
             } ?: run {//没有自定义数据处理,则直接返回原始数据
                 try {
-                    callBackList.forEach { it.receiveData(bytes as CallBackType) }
+                    callBackList.forEach { it.receiveData(listOf(bytes as CallBackType)) }
                 } catch (e: Exception) {
                     throw RuntimeException(
                         "如果您没有设置数据处理方法,则传入的CallBackType类型应当为ByteArray,否则将无法进行数据转换",
@@ -82,10 +82,10 @@ class EasyKeepReceivePort<CallBackType> internal constructor(serialPort: SerialP
      * 添加串口数据监听,可在不同地方添加多个监听
      * @param callBack 监听
      */
-    fun addDataCallBack(callBack: suspend (CallBackType) -> Unit): EasyReceiveCallBack<CallBackType> {
+    fun addDataCallBack(callBack: suspend (List<CallBackType>) -> Unit): EasyReceiveCallBack<CallBackType> {
         val receiveCallBack = object : EasyReceiveCallBack<CallBackType> {
-            override suspend fun receiveData(data: CallBackType) {
-                callBack(data)
+            override suspend fun receiveData(dataList: List<CallBackType>) {
+                callBack(dataList)
             }
         }
         callBackList.add(receiveCallBack)
@@ -139,9 +139,9 @@ class EasyKeepReceivePort<CallBackType> internal constructor(serialPort: SerialP
 
     //开始接收数据
     private fun start() {
-        if (mutex.isLocked || isStart) return
+        if (openReceiveMutex.isLocked || isStart) return
         CoroutineScope(Dispatchers.IO).launch {
-            mutex.withLock {
+            openReceiveMutex.withLock {
                 if (isStart) return@launch//已经开启了则不再开启
                 serialPort.setReadDataCallBack(this@EasyKeepReceivePort)
                 serialPort.startRead(customMaxReadSize)
