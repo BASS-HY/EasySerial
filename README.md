@@ -45,7 +45,7 @@ dependencyResolutionManagement {
 
 ```groovy
 dependencies {
-    implementation 'com.github.BASS-HY:EasySerial:1.0.0'
+    implementation 'com.github.BASS-HY:EasySerial:1.0.1'
 }
 ```
 

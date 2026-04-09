@@ -31,7 +31,7 @@ import kotlinx.coroutines.withTimeoutOrNull
 internal suspend inline fun tryCatchSuspend(crossinline func: suspend () -> Unit) {
     try {
         func()
-    } catch (e: Exception) {
+    } catch (e: Throwable) {
         logE(e)
     }
 }
@@ -46,7 +46,7 @@ internal suspend inline fun <T> tryCatchSuspend(
 ): T {
     return try {
         func()
-    } catch (e: Exception) {
+    } catch (e: Throwable) {
         logE(e)
         catchValue
     }
@@ -56,7 +56,7 @@ internal suspend inline fun <T> tryCatchSuspend(
 internal inline fun tryCatch(crossinline func: () -> Unit) {
     try {
         func()
-    } catch (e: Exception) {
+    } catch (e: Throwable) {
         logE(e)
     }
 }
@@ -68,7 +68,7 @@ internal inline fun tryCatch(crossinline func: () -> Unit) {
 internal inline fun <T> tryCatch(catchValue: T, crossinline func: () -> T): T {
     return try {
         func()
-    } catch (e: Exception) {
+    } catch (e: Throwable) {
         logE(e)
         catchValue
     }

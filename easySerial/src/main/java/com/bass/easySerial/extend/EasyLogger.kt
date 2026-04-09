@@ -61,7 +61,7 @@ internal fun logPortReceiveData(bytes: ByteArray?) {
         val decodeToString = bytes?.decodeToString()
         if (tryCatch(false) { encoder.canEncode(decodeToString) }) logI("串口接收到数据:${decodeToString}")
         else logI("串口接收到数据:${bytes?.conver2HexStringWithBlank()}")
-    } catch (e: Exception) {
+    } catch (e: Throwable) {
         logI("串口接收到数据(无法转化为字符串或16进制形式):$bytes")
     }
 }
